@@ -1,6 +1,6 @@
 package com.aayush.authforge.authfordgeapi.auth.security;
 
-import com.aayush.authforge.authfordgeapi.entities.Role;
+import com.aayush.authforge.authfordgeapi.common.exceptions.InvalidTokenException;
 import com.aayush.authforge.authfordgeapi.entities.User;
 import com.aayush.authforge.authfordgeapi.user.repositories.UserRepository;
 import io.jsonwebtoken.ExpiredJwtException;
@@ -9,18 +9,15 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import org.jspecify.annotations.NonNull;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
-import java.util.List;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 @Component
 @RequiredArgsConstructor
@@ -32,8 +29,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     @Override
     protected void doFilterInternal(
             HttpServletRequest request,
-            HttpServletResponse response,
-            FilterChain filterChain
+            @NonNull HttpServletResponse response,
+            @NonNull FilterChain filterChain
     ) throws ServletException, IOException {
 
         String header = request.getHeader("Authorization");
@@ -52,19 +49,19 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         try {
 
-            if (!jwtService.isValidAccessToken(token)) {
-                response.sendError(HttpServletResponse.SC_UNAUTHORIZED);
-                return;
-            }
+            jwtService.validateAccessToken(token);
 
             UUID userId = jwtService.extractUserId(token);
 
             User user = userRepository.findById(userId)
                     .orElse(null);
 
-            if (user == null || !user.isEnabled()) {
-                filterChain.doFilter(request, response);
-                return;
+            if (user == null) {
+                throw new InvalidTokenException("User not found");
+            }
+
+            if (!user.isEnabled()) {
+                throw new InvalidTokenException("Account not verified");
             }
 
             UsernamePasswordAuthenticationToken authentication =
@@ -82,8 +79,12 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             SecurityContextHolder.getContext()
                     .setAuthentication(authentication);
 
-        } catch (Exception ignored) {
-            // Let Spring Security handle unauthorized access
+        } catch (InvalidTokenException e) {
+            request.setAttribute("error", e.getMessage());
+        } catch (ExpiredJwtException e) {
+            request.setAttribute("error", "Token expired");
+        } catch (Exception e) {
+            request.setAttribute("error", "Authentication failed");
         }
 
         filterChain.doFilter(request, response);

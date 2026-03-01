@@ -13,15 +13,13 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/users/me")
+@RequestMapping("/api/v1/users/me")
 public class UserController {
 
     private final UserService userService;
 
     @GetMapping()
     public ResponseEntity<UserResponse> getCurrentUser(Authentication authentication){
-
-        System.out.println(authentication.getName()+"wgres");
         return ResponseEntity.status(HttpStatus.OK).body(userService.getByEmail(authentication.getName()));
     }
 

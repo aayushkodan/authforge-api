@@ -10,6 +10,10 @@ public record LoginRequest(
         String email,
 
         @NotBlank(message = "Password is required")
-        @Size(min = 8)
+        @Size(min = 8, message = "Password must be at least 8 characters")
+        @Pattern(
+                regexp = "^(?=.*[A-Z])(?=.*[a-z])(?=.*\\d)(?=\\S+$).+$",  // Added (?=\\S+$)
+                message = "Password must contain uppercase, lowercase, digit, and no whitespace"
+        )
         String password
 ) {}

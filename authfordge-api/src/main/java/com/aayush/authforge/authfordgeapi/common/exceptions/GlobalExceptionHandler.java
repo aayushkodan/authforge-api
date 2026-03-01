@@ -3,8 +3,11 @@ package com.aayush.authforge.authfordgeapi.common.exceptions;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 import java.time.Instant;
 import java.util.Map;
@@ -76,6 +79,72 @@ public class GlobalExceptionHandler {
         return ResponseEntity.badRequest().body(error);
     }
 
+    @ExceptionHandler(InvalidTokenException.class)
+    public ResponseEntity<ApiError> handleInvalidToken(
+            InvalidTokenException ex,
+            HttpServletRequest request
+    ) {
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                .body(new ApiError(
+                        Instant.now(),
+                        HttpStatus.UNAUTHORIZED.value(),
+                        "Unauthorized",
+                        ex.getMessage(),
+                        request.getRequestURI(),
+                        null
+                ));
+    }
+
+    @ExceptionHandler(NoResourceFoundException.class)
+    public ResponseEntity<ApiError> handleNotFound(
+            Exception ex,
+            HttpServletRequest request
+    ) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body(new ApiError(
+                        Instant.now(),
+                        HttpStatus.NOT_FOUND.value(),
+                        "Not Found",
+                        "Resource not found",
+                        request.getRequestURI(),
+                        null
+                ));
+    }
+
+    @ExceptionHandler(BadCredentialsException.class)
+    public ResponseEntity<ApiError> handleBadCredentials(
+            Exception ex,
+            HttpServletRequest request
+    ) {
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                .body(new ApiError(
+                        Instant.now(),
+                        HttpStatus.UNAUTHORIZED.value(),
+                        "Unauthorized",
+                        "Invalid email or password",
+                        request.getRequestURI(),
+                        null
+                ));
+    }
+
+    @ExceptionHandler(AccessDeniedException.class)
+    public ResponseEntity<ApiError> handleAccessDenied(
+            Exception ex,
+            HttpServletRequest request
+    ) {
+        return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                .body(new ApiError(
+                        Instant.now(),
+                        HttpStatus.FORBIDDEN.value(),
+                        "Forbidden",
+                        "You do not have permission to access this resource",
+                        request.getRequestURI(),
+                        null
+                ));
+    }
+    
+
+
     // Fallback for unexpected errors
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiError> handleGeneric(
@@ -92,5 +161,21 @@ public class GlobalExceptionHandler {
         );
 
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
+    }
+
+    @ExceptionHandler(RoleNotFoundException.class)
+    public ResponseEntity<ApiError> handleRoleNotFound(
+            RoleNotFoundException ex,
+            HttpServletRequest request
+    ) {
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(new ApiError(
+                        Instant.now(),
+                        500,
+                        "Server Error",
+                        ex.getMessage(),
+                        request.getRequestURI(),
+                        null
+                ));
     }
 }

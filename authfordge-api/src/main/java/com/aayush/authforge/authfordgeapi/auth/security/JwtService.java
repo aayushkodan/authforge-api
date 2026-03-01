@@ -1,16 +1,10 @@
 package com.aayush.authforge.authfordgeapi.auth.security;
 
 import com.aayush.authforge.authfordgeapi.common.exceptions.InvalidTokenException;
-import com.aayush.authforge.authfordgeapi.common.exceptions.UserNotFoundException;
 import com.aayush.authforge.authfordgeapi.entities.Role;
 import com.aayush.authforge.authfordgeapi.entities.User;
-import com.aayush.authforge.authfordgeapi.user.repositories.UserRepository;
-import io.jsonwebtoken.Claims;
-import io.jsonwebtoken.Jws;
-import io.jsonwebtoken.JwtException;
-import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
-import lombok.Data;
 import lombok.Getter;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -20,7 +14,6 @@ import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.Date;
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
 
 @Service
@@ -64,6 +57,7 @@ public class JwtService {
                 .compact();
     }
 
+
     public Claims extractAllClaims(String token) {
         try {
             return Jwts.parser()
@@ -71,8 +65,10 @@ public class JwtService {
                     .build()
                     .parseSignedClaims(token)
                     .getPayload();
+        } catch (ExpiredJwtException e) {
+            throw new InvalidTokenException("Token expired");
         } catch (JwtException e) {
-            throw new InvalidTokenException("Invalid or expired token");
+            throw new InvalidTokenException("Invalid token");
         }
     }
 
@@ -80,22 +76,16 @@ public class JwtService {
         return UUID.fromString(extractAllClaims(token).getSubject());
     }
 
-    public boolean isValidAccessToken(String token) {
-        try {
-            Claims claims = extractAllClaims(token);
+    public void validateAccessToken(String token) {
 
-            if (!issuer.equals(claims.getIssuer())) {
-                return false;
-            }
+        Claims claims = extractAllClaims(token);
 
-            if (!"access".equals(claims.get("token_type"))) {
-                return false;
-            }
+        if (!issuer.equals(claims.getIssuer())) {
+            throw new InvalidTokenException("Invalid issuer");
+        }
 
-            return true;
-
-        } catch (Exception e) {
-            return false;
+        if (!"access".equals(claims.get("token_type"))) {
+            throw new InvalidTokenException("Invalid token type");
         }
     }
 }

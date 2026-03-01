@@ -24,6 +24,7 @@ public class SmtpEmailService implements EmailService {
             MimeMessageHelper helper =
                     new MimeMessageHelper(message, true, "UTF-8");
 
+            helper.setFrom("aayushkodan@gmail.com", "AuthForge");
             helper.setTo(to);
             helper.setSubject(subject);
             helper.setText(htmlContent, true);
@@ -31,7 +32,7 @@ public class SmtpEmailService implements EmailService {
             mailSender.send(message);
 
         } catch (Exception e) {
-            throw new RuntimeException("Failed to send OTP email");
+            throw new RuntimeException("Failed to send OTP email: " + e.getMessage(), e);
         }
     }
 

@@ -1,6 +1,7 @@
 package com.aayush.authforge.authfordgeapi.auth.services;
 
 import com.aayush.authforge.authfordgeapi.common.exceptions.EmailAlreadyExistsException;
+import com.aayush.authforge.authfordgeapi.common.exceptions.RoleNotFoundException;
 import com.aayush.authforge.authfordgeapi.entities.Provider;
 import com.aayush.authforge.authfordgeapi.entities.Role;
 import com.aayush.authforge.authfordgeapi.entities.User;
@@ -33,7 +34,7 @@ public class AuthServiceImpl implements AuthService{
         }
 
         Role defaultRole = roleRepository.findByName("ROLE_USER")
-                .orElseThrow(() -> new RuntimeException("Default role not found"));
+                .orElseThrow(() -> new RoleNotFoundException("Default role not found"));
 
         User user = User.builder()
                 .name(request.username())

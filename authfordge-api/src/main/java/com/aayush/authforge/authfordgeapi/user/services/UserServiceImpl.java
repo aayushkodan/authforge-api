@@ -63,8 +63,8 @@ public class UserServiceImpl implements UserService {
             user.setName(request.name());
         }
 
-        if (request.image() != null) {
-            user.setProfilePicture(request.image());
+        if (request.profilePicture() != null) {
+            user.setProfilePicture(request.profilePicture());
         }
 
         return UserMapper.toResponse(userRepository.save(user));
@@ -74,6 +74,10 @@ public class UserServiceImpl implements UserService {
     @Transactional
     public void changePassword(String email, ChangePasswordRequest request) {
         User user = findUserByEmail(email);
+
+        if (passwordEncoder.matches(request.newPassword(), user.getPassword())) {
+            throw new InvalidPasswordException("New password cannot be same as old password");
+        }
         if(passwordEncoder.matches(request.currentPassword(), user.getPassword())){
             user.setPassword(passwordEncoder.encode(request.newPassword()));
             userRepository.save(user);

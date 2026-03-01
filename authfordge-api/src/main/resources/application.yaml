@@ -1,6 +1,3 @@
-server:
-  servlet:
-    context-path: /api/v1
 
 spring:
   application:
@@ -23,7 +20,7 @@ spring:
     host: smtp-relay.brevo.com
     port: 587
     username: 9f0f63001@smtp-brevo.com
-    password: xsmtpsib-1c465e61cfafde1e1dc6e53557e66558fa0b415466ff301f83e7d4fde7a019e9-wDCfPBCk12ZJKvAD
+    password: xsmtpsib-1c465e61cfafde1e1dc6e53557e66558fa0b415466ff301f83e7d4fde7a019e9-TzF95OfRwYQeXWP4
     properties:
       mail:
         smtp:
@@ -32,6 +29,24 @@ spring:
           starttls:
             enable: true
     protocol: smtp
+  security:
+    oauth2:
+      client:
+        registration:
+          google:
+            client-id: ${GOGGLE_CLIENT_ID:978121615738-q3ef849thucgn1sqoh498mpj6vckpqbo.apps.googleusercontent.com}
+            client-secret: ${GOGGLE_CLIENT_SECRET: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}
+            scope:
+              - email
+              - profile
+              - openid
+
+          github:
+            client-id: ${GITHUB_CLIENT_ID:Ov23ligzjuUOpPbdRbaH}
+            client-secret: ${GITHUB_CLIENT_SECRET:d4616c4811d32352c706491b8fb1ada5f6852b17}
+            scope:
+              - user:email
+              - read:user
 
 security:
   jwt:
@@ -44,3 +59,9 @@ security:
     cookie-http-only: ${JWT_COOKIE_HTTP_ONLY:true}
     cookie-same-site: ${JWT_COOKIE_SAME_SITE:lax}
     cookie-domain: ${JWT_COOKIE_DOMAIN:localhost}
+
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html

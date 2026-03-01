@@ -1,6 +1,8 @@
 package com.aayush.authforge.authfordgeapi.auth.otp;
 
 import com.aayush.authforge.authfordgeapi.common.email.EmailService;
+import com.aayush.authforge.authfordgeapi.common.exceptions.*;
+import com.aayush.authforge.authfordgeapi.entities.User;
 import com.aayush.authforge.authfordgeapi.user.repositories.UserRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -18,6 +20,7 @@ public class EmailOtpService implements OtpService {
     private final PasswordEncoder passwordEncoder;
     private final UserRepository userRepository;
     private final EmailService emailService;
+    private final jakarta.persistence.EntityManager entityManager;
 
 
     @Override
@@ -25,6 +28,7 @@ public class EmailOtpService implements OtpService {
     public void generateAndSendOtp(String email) {
 
         emailOtpRepository.deleteByEmail(email);
+        entityManager.flush();
 
         int otp = new SecureRandom().nextInt(900000) + 100000;
         String otpString = String.valueOf(otp);
@@ -40,34 +44,33 @@ public class EmailOtpService implements OtpService {
 
     @Override
     @Transactional
-    public boolean verifyOtp(String email, String otp) {
+    public void verifyOtp(String email, String otp) {
 
         EmailOtp emailOtp = emailOtpRepository.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("OTP not found"));
+                .orElseThrow(() -> new OtpNotFoundException("OTP not found"));
 
 
         if (emailOtp.getExpiresAt() == null ||
                 emailOtp.getExpiresAt().isBefore(Instant.now())) {
-            throw new RuntimeException("OTP expired");
+            throw new OtpExpiredException("OTP expired");
         }
 
         if (emailOtp.getAttempts() >= 5) {
-            throw new RuntimeException("Too many attempts");
+            throw new TooManyOtpAttemptsException("Too many attempts");
         }
 
         if (!passwordEncoder.matches(otp, emailOtp.getOtpHash())) {
             emailOtp.setAttempts(emailOtp.getAttempts() + 1);
             emailOtpRepository.save(emailOtp);
-            return false;
+            throw new InvalidOtpException("Invalid OTP");
         }
 
         // success
-        userRepository.findByEmail(email).ifPresent(user -> {
-            user.setEnabled(true);
-            userRepository.save(user);
-        });
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new UserNotFoundException(email));
+
+        user.setEnabled(true);
 
         emailOtpRepository.delete(emailOtp);
-        return true;
     }
 }
