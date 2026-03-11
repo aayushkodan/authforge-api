@@ -62,6 +62,7 @@ public class User implements UserDetails {
     @Column(name = "updated_at")
     private Instant updatedAt;
 
+    @Builder.Default
     @Column(name = "enabled", nullable = false)
     private boolean enabled = false;
 
@@ -69,7 +70,8 @@ public class User implements UserDetails {
     @Column(name = "provider", nullable = false)
     private Provider provider;
 
-    @ManyToMany(fetch = FetchType.EAGER) // ⚠ changed from EAGER
+    @Builder.Default
+    @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(
             name = "user_roles",
             joinColumns = @JoinColumn(name = "user_id"),

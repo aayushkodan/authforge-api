@@ -1,21 +1,23 @@
 package com.aayush.authforge.authfordgeapi.auth.services;
 
+import java.util.Set;
+
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Service;
+
+import com.aayush.authforge.authfordgeapi.auth.io.RegisterRequest;
 import com.aayush.authforge.authfordgeapi.common.exceptions.EmailAlreadyExistsException;
 import com.aayush.authforge.authfordgeapi.common.exceptions.RoleNotFoundException;
 import com.aayush.authforge.authfordgeapi.entities.Provider;
 import com.aayush.authforge.authfordgeapi.entities.Role;
 import com.aayush.authforge.authfordgeapi.entities.User;
 import com.aayush.authforge.authfordgeapi.role.repositories.RoleRepository;
-import com.aayush.authforge.authfordgeapi.auth.io.RegisterRequest;
 import com.aayush.authforge.authfordgeapi.user.io.UserResponse;
 import com.aayush.authforge.authfordgeapi.user.mapper.UserMapper;
 import com.aayush.authforge.authfordgeapi.user.repositories.UserRepository;
 import com.aayush.authforge.authfordgeapi.user.services.UserService;
-import lombok.RequiredArgsConstructor;
-import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.stereotype.Service;
 
-import java.util.Set;
+import lombok.RequiredArgsConstructor;
 
 @Service
 @RequiredArgsConstructor
@@ -30,7 +32,7 @@ public class AuthServiceImpl implements AuthService{
     public UserResponse registerLocalUser(RegisterRequest request) {
 
         if (userRepository.existsByEmail(request.email())) {
-            throw new EmailAlreadyExistsException(request.email());
+            throw new EmailAlreadyExistsException("Email already registered. Please login instead.");
         }
 
         Role defaultRole = roleRepository.findByName("ROLE_USER")

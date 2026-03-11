@@ -1,6 +1,7 @@
 package com.aayush.authforge.authfordgeapi.auth.controllers;
 
 import com.aayush.authforge.authfordgeapi.auth.io.*;
+import com.aayush.authforge.authfordgeapi.auth.mappers.SessionMapper;
 import com.aayush.authforge.authfordgeapi.auth.otp.OtpService;
 import com.aayush.authforge.authfordgeapi.auth.refresh.RefreshToken;
 import com.aayush.authforge.authfordgeapi.auth.refresh.RefreshTokenService;
@@ -25,7 +26,9 @@ import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Arrays;
+import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/v1/auth")
@@ -48,12 +51,12 @@ public class AuthController {
     }
 
     @PostMapping("/login")
-    public ResponseEntity<AuthResponse> login(@Valid @RequestBody LoginRequest request) {
+    public ResponseEntity<AuthResponse> login(@Valid @RequestBody LoginRequest request,HttpServletRequest httpRequest) {
         Authentication authentication = authenticate(request);
         User user = (User) authentication.getPrincipal();
 
         String accessToken = jwtService.generateAccessToken(user);
-        String refreshToken = refreshTokenService.generateRefreshToken(user);
+        String refreshToken = refreshTokenService.generateRefreshToken(user,httpRequest);
 
         return ResponseEntity.ok()
                 .header(HttpHeaders.SET_COOKIE, cookieService.createRefreshCookie(refreshToken, jwtService.getRefreshTtlSeconds()).toString())
@@ -69,7 +72,7 @@ public class AuthController {
         User user = token.getUser();
         String accessToken = jwtService.generateAccessToken(user);
         return ResponseEntity.ok()
-                .header(HttpHeaders.SET_COOKIE, cookieService.createRefreshCookie(refreshTokenService.rotateRefreshToken(token), jwtService.getRefreshTtlSeconds()).toString())
+                .header(HttpHeaders.SET_COOKIE, cookieService.createRefreshCookie(refreshTokenService.rotateRefreshToken(token,request), jwtService.getRefreshTtlSeconds()).toString())
                 .body(new AuthResponse(accessToken, "access", jwtService.getAccessTtlSeconds(), UserMapper.toResponse(user)));
     }
 
@@ -89,10 +92,89 @@ public class AuthController {
         return ResponseEntity.status(HttpStatus.OK).body(ApiResponse.of("OTP verified successfully"));
     }
 
-    @PostMapping("/logout")
-    public ResponseEntity<ApiResponse> logout(HttpServletRequest request, HttpServletResponse response) {
+    @GetMapping("/sessions")
+    public ResponseEntity<List<SessionResponse>> getSessions(Authentication authentication, HttpServletRequest request) {
 
+        User user = (User) authentication.getPrincipal();
         String refreshToken = getRefreshCookie(request);
+
+        RefreshToken currentToken = refreshTokenService.validateRefreshToken(refreshToken);
+
+        if (!currentToken.getUser().getId().equals(user.getId())) {
+            throw new InvalidTokenException("Token does not belong to user");
+        }
+
+        List<RefreshToken> activeSessions = refreshTokenService.getActiveSessions(user);
+
+        List<SessionResponse> sessions = activeSessions.stream().map(session -> SessionMapper.toResponse(session,currentToken.getId())).toList();
+
+        return ResponseEntity.ok(sessions);
+    }
+
+    @DeleteMapping("/sessions/{id}")
+    public ResponseEntity<ApiResponse> revokeSession(
+            @PathVariable UUID id,
+            Authentication authentication,
+            HttpServletRequest request
+    ) {
+
+        User user = (User) authentication.getPrincipal();
+
+        // 1️⃣ Identify current session
+        String rawRefreshToken = getRefreshCookie(request);
+        RefreshToken currentToken =
+                refreshTokenService.validateRefreshToken(rawRefreshToken);
+
+        // 2️⃣ Prevent revoking current session
+        if (currentToken.getId().equals(id)) {
+            throw new InvalidTokenException("Cannot revoke current session");
+        }
+
+        // 3️⃣ Revoke requested session
+        refreshTokenService.revokeSession(user, id);
+
+        return ResponseEntity.ok(
+                ApiResponse.of("Session revoked successfully")
+        );
+    }
+
+    @DeleteMapping("/sessions")
+    public ResponseEntity<ApiResponse> revokeAllOtherSessions(
+            Authentication authentication,
+            HttpServletRequest request
+    ) {
+
+        User user = (User) authentication.getPrincipal();
+
+        // 1️⃣ Identify current session
+        String rawRefreshToken = getRefreshCookie(request);
+        RefreshToken currentToken =
+                refreshTokenService.validateRefreshToken(rawRefreshToken);
+
+        // 2️⃣ Security check
+        if (!currentToken.getUser().getId().equals(user.getId())) {
+            throw new InvalidTokenException("Token does not belong to user");
+        }
+
+        // 3️⃣ Revoke all other sessions
+        refreshTokenService.revokeAllOtherSessions(user, currentToken.getId());
+
+        return ResponseEntity.ok(
+                ApiResponse.of("Logged out from all other devices")
+        );
+    }
+
+    @PostMapping("/logout")
+    public ResponseEntity<ApiResponse> logout(Authentication authentication, HttpServletRequest request, HttpServletResponse response) {
+
+        User user = (User) authentication.getPrincipal();
+        String refreshToken = getRefreshCookie(request);
+        RefreshToken token = refreshTokenService.validateRefreshToken(refreshToken);
+
+        if (!token.getUser().getId().equals(user.getId())) {
+            throw new InvalidTokenException("Token does not belong to user");
+        }
+
         refreshTokenService.revokeByToken(refreshToken);
 
         response.addHeader(

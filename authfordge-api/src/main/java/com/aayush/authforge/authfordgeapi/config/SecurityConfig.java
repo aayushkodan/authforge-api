@@ -2,7 +2,9 @@ package com.aayush.authforge.authfordgeapi.config;
 
 import com.aayush.authforge.authfordgeapi.auth.security.JwtAuthenticationFilter;
 import com.aayush.authforge.authfordgeapi.common.exceptions.ApiError;
+
 import lombok.RequiredArgsConstructor;
+
 import org.jspecify.annotations.NonNull;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -19,9 +21,12 @@ import org.springframework.security.web.authentication.AuthenticationSuccessHand
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
+
 import tools.jackson.databind.ObjectMapper;
 
 import java.time.Instant;
+
+import org.springframework.security.config.Customizer;
 
 @Configuration
 @RequiredArgsConstructor
@@ -40,6 +45,7 @@ public class SecurityConfig {
         return http
                 .csrf(AbstractHttpConfigurer::disable)
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .cors(Customizer.withDefaults())
                 .authorizeHttpRequests(req -> req
                         .requestMatchers(AppConstants.PUBLIC_URLS).permitAll()
                         .requestMatchers("/users/me/**").authenticated()

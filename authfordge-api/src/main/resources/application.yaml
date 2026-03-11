@@ -20,7 +20,7 @@ spring:
     host: smtp-relay.brevo.com
     port: 587
     username: 9f0f63001@smtp-brevo.com
-    password: xsmtpsib-1c465e61cfafde1e1dc6e53557e66558fa0b415466ff301f83e7d4fde7a019e9-TzF95OfRwYQeXWP4
+    password: xsmtpsib-1c465e61cfafde1e1dc6e53557e66558fa0b415466ff301f83e7d4fde7a019e9-Inz2n6bmG7aRdp8h
     properties:
       mail:
         smtp:
@@ -34,8 +34,8 @@ spring:
       client:
         registration:
           google:
-            client-id: ${GOGGLE_CLIENT_ID:978121615738-q3ef849thucgn1sqoh498mpj6vckpqbo.apps.googleusercontent.com}
-            client-secret: ${GOGGLE_CLIENT_SECRET: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}
+            client-id: ${GOOGLE_CLIENT_ID:978121615738-q3ef849thucgn1sqoh498mpj6vckpqbo.apps.googleusercontent.com}
+            client-secret: ${GOOGLE_CLIENT_SECRET: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}
             scope:
               - email
               - profile

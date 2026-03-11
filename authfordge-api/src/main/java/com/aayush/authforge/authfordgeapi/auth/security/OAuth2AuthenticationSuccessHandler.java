@@ -39,7 +39,7 @@ public class OAuth2AuthenticationSuccessHandler implements AuthenticationSuccess
         User user = oAuth2Service.processOAuth2User(registrationId,oAuth2User);
 
         String accessToken = jwtService.generateAccessToken(user);
-        String refreshToken = refreshTokenService.generateRefreshToken(user);
+        String refreshToken = refreshTokenService.generateRefreshToken(user,request);
 
         response.setHeader(HttpHeaders.SET_COOKIE, cookieService.createRefreshCookie(refreshToken, jwtService.getRefreshTtlSeconds()).toString());
 

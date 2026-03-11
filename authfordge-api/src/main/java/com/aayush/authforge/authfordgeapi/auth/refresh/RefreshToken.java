@@ -11,10 +11,13 @@ import java.time.Instant;
 import java.util.UUID;
 
 @Entity
-@Table(name = "refresh_tokens",
+@Table(
+        name = "refresh_tokens",
         indexes = {
-                @Index(name = "idx_refresh_token_hash", columnList = "tokenHash")
-        })
+                @Index(name = "idx_refresh_token_hash", columnList = "tokenHash"),
+                @Index(name = "idx_refresh_user", columnList = "user_id")
+        }
+)
 @Data
 @Builder
 @NoArgsConstructor
@@ -33,6 +36,18 @@ public class RefreshToken {
     private User user;
 
     @Column(nullable = false)
+    private String device;
+
+    @Column(nullable = false)
+    private String ipAddress;
+
+    @Column(nullable = false)
+    private String location;
+
+    @Column(nullable = false)
+    private Instant createdAt;
+
+    @Column(nullable = false)
     private Instant expiresAt;
 
     @Column(nullable = false)
@@ -41,5 +56,6 @@ public class RefreshToken {
     @PrePersist
     public void prePersist() {
         revoked = false;
+        createdAt = Instant.now();
     }
 }
