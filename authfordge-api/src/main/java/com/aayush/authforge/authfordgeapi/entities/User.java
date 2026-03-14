@@ -70,6 +70,9 @@ public class User implements UserDetails {
     @Column(name = "provider", nullable = false)
     private Provider provider;
 
+    @Column(nullable = false)
+    private boolean twoFactorEnabled;
+
     @Builder.Default
     @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(

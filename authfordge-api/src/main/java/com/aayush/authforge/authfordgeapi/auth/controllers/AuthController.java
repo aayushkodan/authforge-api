@@ -11,6 +11,7 @@ import com.aayush.authforge.authfordgeapi.auth.services.AuthService;
 import com.aayush.authforge.authfordgeapi.common.exceptions.InvalidTokenException;
 import com.aayush.authforge.authfordgeapi.entities.User;
 import com.aayush.authforge.authfordgeapi.user.mapper.UserMapper;
+import com.aayush.authforge.authfordgeapi.user.repositories.UserRepository;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -23,6 +24,7 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Arrays;
@@ -42,6 +44,7 @@ public class AuthController {
     private final OtpService otpService;
     private final CookieService cookieService;
     private final RefreshTokenService refreshTokenService;
+    private final UserRepository userRepository;
 
     @PostMapping("/register")
     public ResponseEntity<ApiResponse> register(@Valid @RequestBody RegisterRequest request) {
@@ -51,12 +54,24 @@ public class AuthController {
     }
 
     @PostMapping("/login")
-    public ResponseEntity<AuthResponse> login(@Valid @RequestBody LoginRequest request,HttpServletRequest httpRequest) {
+    public ResponseEntity<AuthResponse> login(@Valid @RequestBody LoginRequest request, HttpServletRequest httpRequest) {
         Authentication authentication = authenticate(request);
         User user = (User) authentication.getPrincipal();
 
+        if (user.isTwoFactorEnabled()) {
+
+            otpService.generateAndSendOtp(user.getEmail());
+
+            return ResponseEntity.ok(new AuthResponse(
+                    null,
+                    "2fa_required",
+                    0,
+                    UserMapper.toResponse(user)
+            ));
+        }
+
         String accessToken = jwtService.generateAccessToken(user);
-        String refreshToken = refreshTokenService.generateRefreshToken(user,httpRequest);
+        String refreshToken = refreshTokenService.generateRefreshToken(user, httpRequest);
 
         return ResponseEntity.ok()
                 .header(HttpHeaders.SET_COOKIE, cookieService.createRefreshCookie(refreshToken, jwtService.getRefreshTtlSeconds()).toString())
@@ -72,7 +87,7 @@ public class AuthController {
         User user = token.getUser();
         String accessToken = jwtService.generateAccessToken(user);
         return ResponseEntity.ok()
-                .header(HttpHeaders.SET_COOKIE, cookieService.createRefreshCookie(refreshTokenService.rotateRefreshToken(token,request), jwtService.getRefreshTtlSeconds()).toString())
+                .header(HttpHeaders.SET_COOKIE, cookieService.createRefreshCookie(refreshTokenService.rotateRefreshToken(token, request), jwtService.getRefreshTtlSeconds()).toString())
                 .body(new AuthResponse(accessToken, "access", jwtService.getAccessTtlSeconds(), UserMapper.toResponse(user)));
     }
 
@@ -92,6 +107,65 @@ public class AuthController {
         return ResponseEntity.status(HttpStatus.OK).body(ApiResponse.of("OTP verified successfully"));
     }
 
+    @PostMapping("/2fa/enable")
+    public ResponseEntity<ApiResponse> enable2fa(Authentication auth) {
+
+        User user = (User) auth.getPrincipal();
+
+        otpService.generateAndSendOtp(user.getEmail());
+
+        return ResponseEntity.ok(
+                ApiResponse.of("OTP sent to verify 2FA enable")
+        );
+    }
+
+    @PostMapping("/2fa/login")
+    public ResponseEntity<AuthResponse> verifyLoginOtp(
+            @RequestBody VerifyEmailRequest request,
+            HttpServletRequest httpRequest
+    ) {
+
+        otpService.verifyOtp(request.email(), request.otp());
+
+        User user = userRepository.findByEmail(request.email())
+                .orElseThrow(() -> new UsernameNotFoundException("User not found"));
+
+        String accessToken = jwtService.generateAccessToken(user);
+        String refreshToken =
+                refreshTokenService.generateRefreshToken(user, httpRequest);
+
+        return ResponseEntity.ok()
+                .header(
+                        HttpHeaders.SET_COOKIE,
+                        cookieService.createRefreshCookie(
+                                refreshToken,
+                                jwtService.getRefreshTtlSeconds()
+                        ).toString()
+                )
+                .body(
+                        new AuthResponse(
+                                accessToken,
+                                "access",
+                                jwtService.getAccessTtlSeconds(),
+                                UserMapper.toResponse(user)
+                        )
+                );
+    }
+
+    @PostMapping("/2fa/disable")
+    public ResponseEntity<ApiResponse> disable2fa(Authentication auth) {
+
+        User user = (User) auth.getPrincipal();
+
+        user.setTwoFactorEnabled(false);
+
+        userRepository.save(user);
+
+        return ResponseEntity.ok(
+                ApiResponse.of("2FA disabled")
+        );
+    }
+
     @GetMapping("/sessions")
     public ResponseEntity<List<SessionResponse>> getSessions(Authentication authentication, HttpServletRequest request) {
 
@@ -106,7 +180,7 @@ public class AuthController {
 
         List<RefreshToken> activeSessions = refreshTokenService.getActiveSessions(user);
 
-        List<SessionResponse> sessions = activeSessions.stream().map(session -> SessionMapper.toResponse(session,currentToken.getId())).toList();
+        List<SessionResponse> sessions = activeSessions.stream().map(session -> SessionMapper.toResponse(session, currentToken.getId())).toList();
 
         return ResponseEntity.ok(sessions);
     }

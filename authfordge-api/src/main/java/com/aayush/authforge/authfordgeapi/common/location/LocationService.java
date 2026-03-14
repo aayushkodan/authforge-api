@@ -11,23 +11,35 @@ public class LocationService {
 
     private final RestTemplate restTemplate = new RestTemplate();
 
-    public String getLocation(String ip) {
+public String getLocation(String ip) {
 
-        try {
+    if (ip == null ||
+        ip.equals("127.0.0.1") ||
+        ip.equals("0:0:0:0:0:0:0:1") ||
+        ip.startsWith("192.168")) {
 
-            String url = "https://ipapi.co/" + ip + "/json/";
+        return "Localhost";
+    }
 
-            Map<String, Object> response
-                    = restTemplate.getForObject(url, Map.class);
+    try {
 
-            String city = (String) response.get("city");
-            String country = (String) response.get("country_name");
+        String url = "https://ipapi.co/" + ip + "/json/";
 
-            return (city != null ? city : "")
-                    + (country != null ? ", " + country : "");
+        Map<String, Object> response =
+                restTemplate.getForObject(url, Map.class);
 
-        } catch (RestClientException e) {
+        String city = (String) response.get("city");
+        String country = (String) response.get("country_name");
+
+        if (city == null && country == null) {
             return "Unknown";
         }
+
+        return (city != null ? city : "")
+                + (country != null ? ", " + country : "");
+
+    } catch (RestClientException e) {
+        return "Unknown";
     }
+}
 }
