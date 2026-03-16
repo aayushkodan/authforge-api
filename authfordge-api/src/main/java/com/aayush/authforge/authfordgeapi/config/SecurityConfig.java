@@ -6,6 +6,7 @@ import com.aayush.authforge.authfordgeapi.common.exceptions.ApiError;
 import lombok.RequiredArgsConstructor;
 
 import org.jspecify.annotations.NonNull;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpStatus;
@@ -25,6 +26,7 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 import tools.jackson.databind.ObjectMapper;
 
 import java.time.Instant;
+import java.util.Arrays;
 
 import org.springframework.security.config.Customizer;
 
@@ -70,15 +72,15 @@ public class SecurityConfig {
     }
 
     @Bean
-    public WebMvcConfigurer corsConfigurer() {
+    public WebMvcConfigurer corsConfigurer(@Value("${app.cors.allowed-origins}") String allowedOrigins) {
+
+        String[] urls = allowedOrigins.trim().split(",");
+
         return new WebMvcConfigurer() {
             @Override
             public void addCorsMappings(@NonNull CorsRegistry registry) {
                 registry.addMapping("/api/v1/**")
-                        .allowedOrigins(
-                                "http://localhost:5173",  // React dev
-                                "https://your-auth-ui.netlify.app"  // Production
-                        )
+                        .allowedOrigins(urls)
                         .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
                         .allowedHeaders("*")
                         .allowCredentials(true);

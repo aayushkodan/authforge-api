@@ -36,7 +36,7 @@ public class UserController {
         return ResponseEntity.status(HttpStatus.OK).body(userService.updateProfile(email,user));
     }
 
-    @PutMapping("/password")
+    @PutMapping("/change-password")
     public ResponseEntity<Void> changePassword(Authentication authentication, @Valid @RequestBody ChangePasswordRequest request){
         String email = authentication.getName();
         userService.changePassword(email, request);

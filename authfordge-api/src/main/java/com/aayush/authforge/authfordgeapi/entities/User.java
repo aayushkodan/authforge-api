@@ -66,12 +66,12 @@ public class User implements UserDetails {
     @Column(name = "enabled", nullable = false)
     private boolean enabled = false;
 
+    @Column(nullable = false)
+    private boolean twoFactorEnabled;
+
     @Enumerated(EnumType.STRING)
     @Column(name = "provider", nullable = false)
     private Provider provider;
-
-    @Column(nullable = false)
-    private boolean twoFactorEnabled;
 
     @Builder.Default
     @ManyToMany(fetch = FetchType.EAGER)
