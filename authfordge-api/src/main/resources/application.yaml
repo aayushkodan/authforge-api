@@ -17,10 +17,10 @@ spring:
     show-sql: true
 
   mail:
-    host: ${MAIL_HOST:smtp-relay.brevo.com}
-    port: ${MAIL_PORT:587}
-    username: ${MAIL_USERNAME:9f0f63001@smtp-brevo.com}
-    password: ${MAIL_PASSWORD:xsmtpsib-1c465e61cfafde1e1dc6e53557e66558fa0b415466ff301f83e7d4fde7a019e9-uwU2mxlXPzFaSgEu}
+    host: ${MAIL_HOST}
+    port: ${MAIL_PORT}
+    username: ${MAIL_USERNAME}
+    password: ${MAIL_PASSWORD}
     properties:
       mail:
         smtp:
@@ -50,15 +50,13 @@ spring:
 
 security:
   jwt:
-    secret: ${JWT_SECRET:myJwtSecretKeyIsVerySecureAndLongEnoughForHS256AlgorithmWithAtLeast32Bytes512bitsMyApp2026DelhiStudentProjectVanLifeAPI}
-    issuer: ${JWT_ISSUER:api.substring.com}
-    access-ttl-seconds: ${JWT_ACCESS_TTL_SECONDS:600}
-    refresh-ttl-seconds: ${JWT_REFRESH_TTL_SECONDS:86400}
-    refresh-token-cookie-name: ${JWT_REFRESH_COOKIE_NAME:refreshToken}
-    cookie-secure: ${JWT_COOKIE_SECURE:true}
-    cookie-http-only: ${JWT_COOKIE_HTTP_ONLY:true}
-    cookie-same-site: ${JWT_COOKIE_SAME_SITE:none}
-    cookie-domain: ${JWT_COOKIE_DOMAIN:localhost}
+    secret: ${JWT_SECRET}
+    issuer: ${JWT_ISSUER}
+    refresh-ttl-seconds: ${JWT_REFRESH_TTL_SECONDS}
+    refresh-token-cookie-name: ${JWT_REFRESH_COOKIE_NAME}
+    cookie-secure: ${JWT_COOKIE_SECURE}
+    cookie-http-only: ${JWT_COOKIE_HTTP_ONLY}
+    cookie-same-site: ${JWT_COOKIE_SAME_SITE}
 
 springdoc:
   api-docs:

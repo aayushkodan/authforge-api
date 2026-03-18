@@ -12,14 +12,12 @@ public class CookieService {
     private final String cookieName;
     private final boolean cookieHttpOnly;
     private final boolean cookieSecure;
-    private final String domain;
     private final String sameSite;
 
     public CookieService(
             @Value("${security.jwt.refresh-token-cookie-name}") String cookieName,
             @Value("${security.jwt.cookie-http-only}") boolean cookieHttpOnly,
             @Value("${security.jwt.cookie-secure}") boolean cookieSecure,
-            @Value("${security.jwt.cookie-domain}") String domain,
             @Value("${security.jwt.cookie-same-site}") String sameSite
     ) {
         this.cookieName = cookieName;
@@ -31,7 +29,6 @@ public class CookieService {
 
     public ResponseCookie createRefreshCookie(String token, long maxage) {
         return ResponseCookie.from(cookieName, token)
-                .domain(domain)
                 .sameSite(sameSite)
                 .secure(cookieSecure)
                 .httpOnly(cookieHttpOnly)
