@@ -52,7 +52,7 @@ security:
   jwt:
     secret: ${JWT_SECRET}
     issuer: ${JWT_ISSUER}
-    access-ttl-seconds: ${JWT_ACCESS_TTL_SECONDS}}
+    access-ttl-seconds: ${JWT_ACCESS_TTL_SECONDS}
     refresh-ttl-seconds: ${JWT_REFRESH_TTL_SECONDS}
     refresh-token-cookie-name: ${JWT_REFRESH_COOKIE_NAME}
     cookie-secure: ${JWT_COOKIE_SECURE}
