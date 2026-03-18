@@ -41,7 +41,6 @@ public class CookieService {
                 .httpOnly(cookieHttpOnly)
                 .secure(cookieSecure)
                 .sameSite(sameSite)
-                .domain(domain)
                 .path("/")
                 .maxAge(0)
                 .build();
