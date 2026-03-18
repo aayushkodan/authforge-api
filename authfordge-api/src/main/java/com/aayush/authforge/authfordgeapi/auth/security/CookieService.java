@@ -23,7 +23,6 @@ public class CookieService {
         this.cookieName = cookieName;
         this.cookieHttpOnly = cookieHttpOnly;
         this.cookieSecure = cookieSecure;
-        this.domain = domain;
         this.sameSite = sameSite;
     }
 
