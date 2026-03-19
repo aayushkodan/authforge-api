@@ -119,6 +119,15 @@ public class AuthController {
         );
     }
 
+    @PostMapping("/2fa/verify-otp")
+    public ResponseEntity<ApiResponse> verify2faOtp(Authentication authentication,@Valid @RequestBody VerifyEmailRequest request) {
+
+        User user = (User) authentication.getPrincipal();
+        otpService.verifyOtp(request.email(), request.otp());
+        user.setEnabled(true);
+        return ResponseEntity.status(HttpStatus.OK).body(ApiResponse.of("OTP verified successfully"));
+    }
+
     @PostMapping("/2fa/login")
     public ResponseEntity<AuthResponse> verifyLoginOtp(
             @RequestBody VerifyEmailRequest request,
