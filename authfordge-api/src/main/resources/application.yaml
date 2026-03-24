@@ -4,9 +4,9 @@ spring:
     name: authfordge-api
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
-    url: ${DB_URL}
-    username: ${DB_USERNAME}
-    password: ${DB_PASSWORD}
+    url: ${DB_URL:jdbc:mysql://localhost:3306/authfordge}
+    username: ${DB_USERNAME:root}
+    password: ${DB_PASSWORD:root}
 
   jpa:
     hibernate:
@@ -50,14 +50,14 @@ spring:
 
 security:
   jwt:
-    secret: ${JWT_SECRET}
-    issuer: ${JWT_ISSUER}
-    access-ttl-seconds: ${JWT_ACCESS_TTL_SECONDS}
-    refresh-ttl-seconds: ${JWT_REFRESH_TTL_SECONDS}
-    refresh-token-cookie-name: ${JWT_REFRESH_COOKIE_NAME}
-    cookie-secure: ${JWT_COOKIE_SECURE}
-    cookie-http-only: ${JWT_COOKIE_HTTP_ONLY}
-    cookie-same-site: ${JWT_COOKIE_SAME_SITE}
+    secret: ${JWT_SECRET:myJwtSecretKeyIsVerySecureAndLongEnoughForHS256AlgorithmWithAtLeast32Bytes512bitsMyApp2026DelhiStudentProjectVanLifeAPI}
+    issuer: ${JWT_ISSUER:localhost}
+    access-ttl-seconds: ${JWT_ACCESS_TTL_SECONDS:900}
+    refresh-ttl-seconds: ${JWT_REFRESH_TTL_SECONDS:604800}
+    refresh-token-cookie-name: ${JWT_REFRESH_COOKIE_NAME:refreshToken}
+    cookie-secure: ${JWT_COOKIE_SECURE:false}
+    cookie-http-only: ${JWT_COOKIE_HTTP_ONLY:true}
+    cookie-same-site: ${JWT_COOKIE_SAME_SITE:lax}
 
 springdoc:
   api-docs:

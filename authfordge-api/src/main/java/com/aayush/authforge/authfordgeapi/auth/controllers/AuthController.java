@@ -49,7 +49,14 @@ public class AuthController {
     @PostMapping("/register")
     public ResponseEntity<ApiResponse> register(@Valid @RequestBody RegisterRequest request) {
         authService.registerLocalUser(request);
-        otpService.generateAndSendOtp(request.email());
+        try {
+            otpService.generateAndSendOtp(request.email());
+        } catch (Exception e) {
+            // Log the actual error
+            System.err.println("Failed to send OTP: " + e.getMessage());
+            e.printStackTrace();
+            throw new RuntimeException("Failed to send OTP email: " + e.getMessage(), e);
+        }
         return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.of("User registered. OTP sent to email."));
     }
 
@@ -99,7 +106,6 @@ public class AuthController {
 
         return ResponseEntity.ok(ApiResponse.of("OTP resent successfully"));
     }
-
 
     @PostMapping("/verify-otp")
     public ResponseEntity<ApiResponse> verifyOtp(@Valid @RequestBody VerifyEmailRequest request) {
